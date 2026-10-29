@@ -1,21 +1,26 @@
-using Api.Features.Students;
-using Api.Features.Courses;
 using Api.Features.Admissions;
+using Api.Features.Courses;
+using Api.Features.Students;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
+using Application.Features.Admissions.CreateAdmission;
+using Application.Features.Admissions.GetAdmissionById;
+using Application.Features.Admissions.GetAllAdmissions;
+using Application.Features.Courses.CreateCourse;
+using Application.Features.Courses.DeleteCourse;
+using Application.Features.Courses.GetAllCourses;
+using Application.Features.Courses.GetCourseById;
+using Application.Features.Courses.UpdateCourse;
 using Application.Features.Students.CreateStudent;
 using Application.Features.Students.GetAllStudents;
 using Application.Features.Students.GetStudentById;
-using Application.Features.Courses.CreateCourse;
-using Application.Features.Courses.GetAllCourses;
-using Application.Features.Courses.GetCourseById;
-using Application.Features.Admissions.CreateAdmission;
-using Application.Features.Admissions.GetAdmissionById;
 using Domain.Common;
 using FluentValidation;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +40,9 @@ builder.Services.AddScoped<IQueryHandler<GetAllCoursesQuery, Result<GetAllCourse
 builder.Services.AddScoped<IQueryHandler<GetCourseByIdQuery, Result<GetCourseByIdResponse>>, GetCourseByIdQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<CreateAdmissionCommand, Result<CreateAdmissionResponse>>, CreateAdmissionCommandHandler>();
 builder.Services.AddScoped<IQueryHandler<GetAdmissionByIdQuery, Result<GetAdmissionByIdResponse>>, GetAdmissionByIdQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<GetAllAdmissionsQuery,Result<GetAllAdmissionsResponse>>, GetAllAdmissionsQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<UpdateCourseCommand, Result<UpdateCourseResponse>>, UpdateCourseCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<DeleteCourseCommand, Result>, DeleteCourseCommandHandler>();
 
 // API
 builder.Services.AddEndpointsApiExplorer();
