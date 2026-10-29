@@ -20,7 +20,7 @@ public static class StudentEndpoints
             .WithSummary("Get all students");
 
         group.MapPost("/", Create)
-            .WithName("GetByIdRouteName")
+            .WithName("CreateStudent")
             .WithSummary("Create a new student");
 
         group.MapGet("/{id:guid}", GetById)
@@ -46,7 +46,7 @@ public static class StudentEndpoints
     {
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess
-            ? TypedResults.CreatedAtRoute(result.Value, "GetByIdRouteName", new { id = result.Value!.Id })
+            ? TypedResults.CreatedAtRoute(result.Value, "GetStudentById", new { id = result.Value!.Id })
             : result.ToProblemDetails();
     }
 
