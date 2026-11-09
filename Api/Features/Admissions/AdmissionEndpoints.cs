@@ -1,5 +1,6 @@
 namespace Api.Features.Admissions;
 
+using Api.Common.Authorization;
 using Api.Common.Extensions;
 using Application.Abstractions.Messaging;
 using Application.Features.Admissions.CreateAdmission;
@@ -16,17 +17,10 @@ public static class AdmissionEndpoints
             .WithTags("Admissions")
             .RequireAuthorization(); // every endpoint below now needs a token
 
-        group.MapPost("/", Create)
-            .WithName("CreateAdmission")
-            .WithSummary("Create a new admission with courses");
-
-        group.MapGet("/{id:guid}", GetById)
-            .WithName("GetByIdRouteName")
-            .WithSummary("Get admission by ID with courses");
-
-        group.MapGet("/", GetAll)
-            .WithName("GetAllAdmissions")
-            .WithSummary("Get all admissions");
+        // AdmissionEndpoints.cs — only a Registrar creates/lists admissions; GetById is fixed in Step 14
+        group.MapPost("/", Create).RequireAuthorization(Policies.CanManageAdmissions);
+        group.MapGet("/", GetAll).RequireAuthorization(Policies.CanManageAdmissions);
+        group.MapGet("/{id:guid}", GetById).RequireAuthorization();
     }
 
     private static async Task<IResult> Create(

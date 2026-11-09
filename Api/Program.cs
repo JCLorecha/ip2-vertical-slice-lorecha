@@ -1,3 +1,4 @@
+using Api.Common.Authorization;
 using Api.Features.Admissions;
 using Api.Features.Auth;
 using Api.Features.Courses;
@@ -108,7 +109,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+// Authorization Policies (Step 12)
+builder.Services.AddAppAuthorization();
 
 // OpenAPI and Scalar
 builder.Services.AddOpenApi(options =>
@@ -221,6 +223,30 @@ var app = builder.Build();
 
 // Apply database migrations and seed initial data only when needed
 await app.Services.MigrateAndSeedAsync();
+
+// Return JSON ProblemDetails for 401 and 403 responses (Step 12)
+app.UseStatusCodePages(async context =>
+{
+    var response = context.HttpContext.Response;
+
+    if (response.StatusCode is StatusCodes.Status401Unauthorized
+                            or StatusCodes.Status403Forbidden)
+    {
+        response.ContentType = "application/problem+json";
+
+        await response.WriteAsJsonAsync(
+            new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Status = response.StatusCode,
+                Title = response.StatusCode == StatusCodes.Status401Unauthorized
+                    ? "Unauthorized"
+                    : "Forbidden",
+                Detail = response.StatusCode == StatusCodes.Status401Unauthorized
+                    ? "Authentication is required to access this resource."
+                    : "You do not have permission to perform this action."
+            });
+    }
+});
 
 // Configure the HTTP request pipeline
 app.UseAuthentication();

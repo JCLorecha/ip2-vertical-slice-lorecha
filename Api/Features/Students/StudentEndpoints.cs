@@ -1,5 +1,6 @@
 namespace Api.Features.Students;
 
+using Api.Common.Authorization;
 using Api.Common.Extensions;
 using Application.Abstractions.Messaging;
 using Application.Features.Students.CreateStudent;
@@ -16,17 +17,10 @@ public static class StudentEndpoints
             .WithTags("Students")
             .RequireAuthorization(); // every endpoint below now needs a token
 
-        group.MapGet("/", GetAll)
-            .WithName("GetAllStudents")
-            .WithSummary("Get all students");
-
-        group.MapPost("/", Create)
-            .WithName("CreateStudent")
-            .WithSummary("Create a new student");
-
-        group.MapGet("/{id:guid}", GetById)
-            .WithName("GetStudentById")
-            .WithSummary("Get student by ID");
+        // StudentEndpoints.cs — a student browsing other students is out of scope for this lab
+        group.MapGet("/", GetAll).RequireAuthorization(Policies.CanManageStudents);
+        group.MapGet("/{id:guid}", GetById).RequireAuthorization(Policies.CanManageStudents);
+        group.MapPost("/", Create).RequireAuthorization(Policies.CanManageStudents);
     }
 
     private static async Task<IResult> GetAll(

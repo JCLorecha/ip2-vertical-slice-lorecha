@@ -1,5 +1,6 @@
 namespace Api.Features.Courses;
 
+using Api.Common.Authorization;
 using Api.Common.Extensions;
 using Application.Abstractions.Messaging;
 using Application.Features.Courses.CreateCourse;
@@ -8,35 +9,31 @@ using Application.Features.Courses.GetAllCourses;
 using Application.Features.Courses.GetCourseById;
 using Application.Features.Courses.UpdateCourse;
 using Domain.Common;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 public static class CourseEndpoints
 {
     private const string GetByIdRouteName = "GetCourseById";
+
     public static void MapCourseEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/courses")
             .WithTags("Courses")
-            .RequireAuthorization(); // every endpoint below now needs a token
+            .RequireAuthorization();
 
+        // Browsing courses is available to any authenticated user.
         group.MapGet("/", GetAll)
-            .WithName("GetAllCourses")
-            .WithSummary("Get all courses");
-
-        group.MapPost("/", Create)
-            .WithName("CreateCourse")
-            .WithSummary("Create a new course");
+            .RequireAuthorization();
 
         group.MapGet("/{id:guid}", GetById)
-            .WithName("GetCourseById")
-            .WithSummary("Get course by ID");
+            .WithName(GetByIdRouteName)
+            .RequireAuthorization();
+
+        // Only Registrars can create or update courses.
+        group.MapPost("/", Create)
+            .RequireAuthorization(Policies.CanManageCourses);
 
         group.MapPut("/{id:guid}", Update)
-            .WithName("UpdateCourse")
-            .WithSummary("Update an existing course");
-        group.MapDelete("/{id:guid}", Delete)
-            .WithName("DeleteCourse")
-            .WithSummary("Delete a course");
+            .RequireAuthorization(Policies.CanManageCourses);
     }
 
     private static async Task<IResult> GetAll(
@@ -45,6 +42,7 @@ public static class CourseEndpoints
     {
         var query = new GetAllCoursesQuery();
         var result = await handler.HandleAsync(query, cancellationToken);
+
         return result.IsSuccess
             ? TypedResults.Ok(result.Value)
             : result.ToProblemDetails();
@@ -56,8 +54,12 @@ public static class CourseEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(command, cancellationToken);
+
         return result.IsSuccess
-            ? TypedResults.CreatedAtRoute(result.Value, "GetCourseById", new { id = result.Value!.Id })
+            ? TypedResults.CreatedAtRoute(
+                result.Value,
+                GetByIdRouteName,
+                new { id = result.Value!.Id })
             : result.ToProblemDetails();
     }
 
@@ -68,6 +70,7 @@ public static class CourseEndpoints
     {
         var query = new GetCourseByIdQuery(id);
         var result = await handler.HandleAsync(query, cancellationToken);
+
         return result.IsSuccess
             ? TypedResults.Ok(result.Value)
             : result.ToProblemDetails();
@@ -79,22 +82,35 @@ public static class CourseEndpoints
         ICommandHandler<UpdateCourseCommand, Result<UpdateCourseResponse>> handler,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateCourseCommand(id, request.Title, request.Code, request.Credits);
+        var command = new UpdateCourseCommand(
+            id,
+            request.Title,
+            request.Code,
+            request.Credits);
+
         var result = await handler.HandleAsync(command, cancellationToken);
+
         return result.Match(
-        onSuccess: value => TypedResults.Ok(value),
-        onFailure: _ => result.ToProblemDetails());
+            onSuccess: value => TypedResults.Ok(value),
+            onFailure: _ => result.ToProblemDetails());
     }
+
     private static async Task<IResult> Delete(
         Guid id,
         ICommandHandler<DeleteCourseCommand, Result> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new DeleteCourseCommand(id),
-        cancellationToken);
+        var result = await handler.HandleAsync(
+            new DeleteCourseCommand(id),
+            cancellationToken);
+
         return result.Match(
-        onSuccess: () => TypedResults.NoContent(),
-        onFailure: _ => result.ToProblemDetails());
+            onSuccess: () => TypedResults.NoContent(),
+            onFailure: _ => result.ToProblemDetails());
     }
 }
-public sealed record UpdateCourseRequest(string Title, string Code, int Credits);
+
+public sealed record UpdateCourseRequest(
+    string Title,
+    string Code,
+    int Credits);
