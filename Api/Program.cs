@@ -19,12 +19,14 @@ using FluentValidation;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Application.Abstractions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
 builder.Services.AddDbContext<IAppDbContext, AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Database")));
+
 
 // Validators
 builder.Services.AddValidatorsFromAssemblyContaining<CreateStudentValidator>();
@@ -41,6 +43,9 @@ builder.Services.AddScoped<IQueryHandler<GetAdmissionByIdQuery, Result<GetAdmiss
 builder.Services.AddScoped<IQueryHandler<GetAllAdmissionsQuery, Result<GetAllAdmissionsResponse>>, GetAllAdmissionsQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<UpdateCourseCommand, Result<UpdateCourseResponse>>, UpdateCourseCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<DeleteCourseCommand, Result>, DeleteCourseCommandHandler>();
+builder.Services.AddScoped<IPasswordHasher, Infrastructure.Authentication.PasswordHasher>();
+
+
 
 // API
 builder.Services.AddEndpointsApiExplorer();
