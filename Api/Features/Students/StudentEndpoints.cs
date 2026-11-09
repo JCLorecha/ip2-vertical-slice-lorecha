@@ -13,7 +13,8 @@ public static class StudentEndpoints
     public static void MapStudentEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/students")
-            .WithTags("Students");
+            .WithTags("Students")
+            .RequireAuthorization(); // every endpoint below now needs a token
 
         group.MapGet("/", GetAll)
             .WithName("GetAllStudents")

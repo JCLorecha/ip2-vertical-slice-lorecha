@@ -16,7 +16,8 @@ public static class CourseEndpoints
     public static void MapCourseEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/courses")
-            .WithTags("Courses");
+            .WithTags("Courses")
+            .RequireAuthorization(); // every endpoint below now needs a token
 
         group.MapGet("/", GetAll)
             .WithName("GetAllCourses")
